@@ -6,6 +6,7 @@
 #endif
 
 #include "mm.h"
+#include "portconfig.h"
 
 using namespace std;
 
@@ -105,6 +106,7 @@ int main(int argc, char** argv) {
   top->io_host_fromhost_bits = 0;
   top->io_host_fromhost_valid = 0;
   do {
+    ADD_DEBUG_PRINTING_STMTS
     tick();
   } while(!top->io_host_tohost && main_time < timeout);
 
