@@ -1,5 +1,6 @@
 #include <verilated.h>
 #include <iostream>
+#include <string>
 
 #if VM_TRACE
 # include <verilated_vcd_c.h>	// Trace file format header
@@ -26,7 +27,7 @@ VerilatedVcdC* tfp;
 mm_magic_t* mem; // target memory
 
 // TODO Provide command-line options like vcd filename, timeout count, etc.
-const long timeout = 100000000L;
+const long timeout = 10000L; // 100000000L;
 
 void tick() {
   top->clock = 1;
@@ -80,6 +81,12 @@ void tick() {
 }
 
 int main(int argc, char** argv) {
+  // ARGS:
+  // - args[1] = path to "hex" file of elf dump
+  // - args[2] = program counter of instruction of interest
+  // - args[3] = number (0-3) of register to print at end
+  // - args[4] = optional VCD dump path
+
   Verilated::commandArgs(argc, argv);   // Remember args
   top = new VTile; // target design
   mem = new mm_magic_t(1L << 32, 8); // target memory
@@ -90,7 +97,7 @@ int main(int argc, char** argv) {
   VL_PRINTF("Enabling waves...\n");
   tfp = new VerilatedVcdC;
   top->trace(tfp, 99);	// Trace 99 levels of hierarchy
-  tfp->open(argc > 2 ? argv[2] : "dump.vcd"); // Open the dump file
+  tfp->open(argc > 4 ? argv[4] : "dump.vcd"); // Open the dump file
 #endif
 
   cout << "Starting simulation!\n";
@@ -101,21 +108,35 @@ int main(int argc, char** argv) {
     tick();
   }
 
+  unsigned long tgt_pc = stoi(argv[2], nullptr, 0);
+
   // start
   top->reset = 0;
   top->io_host_fromhost_bits = 0;
   top->io_host_fromhost_valid = 0;
   do {
-    ADD_DEBUG_PRINTING_STMTS
+    // ADD_DEBUG_PRINTING_STMTS
     tick();
-  } while(!top->io_host_tohost && main_time < timeout);
+  } while(!top->io_host_tohost && main_time < timeout
+    && top->Tile__DOT__core__DOT__dpath__DOT__ew_pc != tgt_pc
+    );
 
-  int retcode = top->io_host_tohost >> 1;
-
-  // Run for 10 more clocks
-  for (size_t i = 0 ; i < 10 ; i++) {
-    tick();
+  // Print value in RD
+  int reg_id = 0;
+  switch (std::stoi(argv[3])) {
+    case 0: reg_id = 5; break;
+    case 1: reg_id = 6; break;
+    case 2: reg_id = 7; break;
+    case 3: reg_id= 28; break;
   }
+  VL_PRINTF("(_ bv%d 32) ", top->Tile__DOT__core__DOT__dpath__DOT__regFile__DOT__regs[reg_id]);
+
+  // int retcode = top->io_host_tohost >> 1;
+
+  // // Run for 10 more clocks
+  // for (size_t i = 0 ; i < 10 ; i++) {
+  //   tick();
+  // }
 
   if (main_time >= timeout) {
     cerr << "Simulation terminated by timeout at time " << main_time
@@ -124,9 +145,9 @@ int main(int argc, char** argv) {
   } else {
     cerr << "Simulation completed at time " << main_time <<
            " (cycle " << main_time / 10 << ")"<< endl;
-    if (retcode) {
-      cerr << "TOHOST = " << retcode << endl;
-    }
+    // if (retcode) {
+    //   cerr << "TOHOST = " << retcode << endl;
+    // }
   }
 
 #if VM_TRACE
@@ -138,6 +159,7 @@ int main(int argc, char** argv) {
 
   cout << "Finishing simulation!\n";
 
-  return retcode == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+  // return retcode == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+  return EXIT_SUCCESS;
 }
 

@@ -5,5 +5,5 @@
 .type  add,@function
 
 add:
-  add a0, a0, a1
+  add t0, t1, t2
   ret

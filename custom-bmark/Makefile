@@ -12,10 +12,12 @@ CUSTOM_BMARK_OBJS := \
 
 riscv_bmark_dir = $(RISCV_TEST_DIR)/benchmarks
 
-RISCV_GCC     = riscv32-unknown-elf-gcc
-RISCV_CFLAGS  = -static -std=gnu99 -fno-common -fno-builtin-printf \
+RISCV_GCC     = riscv64-unknown-elf-gcc
+RISCV_CFLAGS  = -march="rv32im" -mabi="ilp32" -Wa,-mpriv-spec=1.10 \
+	-static -std=gnu99 -fno-common -fno-builtin-printf \
 	-I$(RISCV_TEST_DIR)/env -I$(RISCV_TEST_DIR)/benchmarks/common
-RISCV_LDFLAGS = -T $(RISCV_TEST_DIR)/benchmarks/common/test.ld \
+RISCV_LDFLAGS = -march="rv32im" -mabi="ilp32" \
+	-T $(RISCV_TEST_DIR)/benchmarks/common/test.ld \
 	-I$(RISCV_TEST_DIR)/env -I$(RISCV_TEST_DIR)/benchmarks/common
 
 VPATH += $(RISCV_TEST_DIR)/benchmarks/common 
@@ -35,7 +37,7 @@ $(CUSTOM_BMARK_BIN): $(CUSTOM_BMARK_OBJS)
 	elf2hex 16 32768 $< > $@
 
 %.dump: %
-	riscv32-unknown-elf-objdump \
+	riscv64-unknown-elf-objdump \
 	--disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data \
 	$< > $@
 
