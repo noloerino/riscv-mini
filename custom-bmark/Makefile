@@ -1,5 +1,9 @@
 base_dir = $(abspath ..)
 
+# Override implicit variables
+CC = riscv64-unknown-elf-gcc
+LDFLAGS = -march="rv32im" -mabi="ilp32"
+
 # For custom benchmarks
 RISCV_TEST_DIR     ?= $(base_dir)/riscv-tools-priv1.7/riscv-tests
 CUSTOM_BMARK_BIN   ?= main
@@ -38,6 +42,7 @@ $(CUSTOM_BMARK_BIN): $(CUSTOM_BMARK_OBJS)
 
 %.dump: %
 	riscv64-unknown-elf-objdump \
+	--target="elf32-littleriscv" --architecture="riscv:rv32" \
 	--disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data \
 	$< > $@
 
