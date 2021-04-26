@@ -1,9 +1,9 @@
 .text
 .align 2
 
-.globl main 
-#.type  add,@function
+.globl add
+.type  add,@function
 
-main:
+add:
   add t0, t1, t2
   ret
