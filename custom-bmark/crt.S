@@ -32,7 +32,8 @@ machine_trap_entry:
 .align 6
 .globl _start
 _start:
-	nop # CODE UNDER TEST HERE
+	# CODE UNDER TEST HERE
+	.include "asm.S"
 	la t0, _init
 	csrw mepc, t0
 	eret
